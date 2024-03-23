@@ -4,7 +4,7 @@ from datetime import datetime
 
 # Function to query Alpha Vantage API
 def query_alpha_vantage(symbol, function, start_date, end_date):
-    api_key = "OUR API KEY"  # Replace with our Alpha Vantage API key
+    api_key = "CEOVEVRH0Q90VEUY"  # Replace with our Alpha Vantage API key
     base_url = "https://www.alphavantage.co/query"
 
     params = {
