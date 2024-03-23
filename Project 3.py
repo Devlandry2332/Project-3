@@ -35,7 +35,14 @@ def get_time_series():
         try:
             time_series = int(time_series)
             if time_series in (1, 2, 3, 4):
-                return str(time_series)
+                if time_series == 1:
+                    return "TIME_SERIES_INTRADAY"
+                elif time_series == 2:
+                    return "TIME_SERIES_DAILY"
+                elif time_series == 3:
+                    return "TIME_SERIES_WEEKLY"
+                else:
+                    return "TIME_SERIES_MONTHLY"
         except ValueError:
             print("Error: Please enter 1 for Bar or 2 for Line.")
 
@@ -95,8 +102,8 @@ def plot_graph(dates, values, chart_type):
 def main():
     # Inputs
     symbol = get_symbol()
-    function = get_time_series()
     chart_type = get_chart_type()
+    function = get_time_series()
     start_date = get_start_date()
     end_date = get_end_date(start_date)
 
