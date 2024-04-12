@@ -1,10 +1,82 @@
 import requests
 import matplotlib.pyplot as plt
 from datetime import datetime
+choice = ''
+# Get Symbol
+def get_symbol():
+    symbol = input("Enter the stock symbol you are looking for: ").upper()
+    return symbol
+
+# Get Chart Type
+def get_chart_type():
+    print("Chart Types")
+    print("-----------")
+    print("1. Bar")
+    print("2. Line")
+    while True:
+        chart_type = input("Enter the chart type you want (1, 2): ")
+        try:
+            chart_type = int(chart_type)
+            if chart_type in (1, 2):
+                return str(chart_type)
+        except ValueError:
+            print("Error: Please enter 1 for Bar or 2 for Line.")
+
+# Get Time Series
+def get_time_series():
+    global choice
+    print("Select the Time Series of the chart you want to Generate")
+    print("--------------------------------------------------------")
+    print("1. Intraday")
+    print("2. Daily")
+    print("3. Weekly")
+    print("4. Monthly")
+    while True:
+        time_series = input("Enter the time series option (1, 2, 3, 4): ")
+        try:
+            time_series = int(time_series)
+            if time_series in (1, 2, 3, 4):
+                if time_series == 1:
+                    choice = "Time Series (5min)"
+                    return "TIME_SERIES_INTRADAY"
+                elif time_series == 2:
+                    choice = "Time Series (Daily)"
+                    return "TIME_SERIES_DAILY"
+                elif time_series == 3:
+                    choice = "Weekly Time Series"
+                    return "TIME_SERIES_WEEKLY"
+                else:
+                    choice = "Monthly Time Series"
+                    return "TIME_SERIES_MONTHLY"
+        except ValueError:
+            print("Error: Please enter 1 for Bar or 2 for Line.")
+
+# Get Start Date
+def get_start_date():
+    while True:
+        start_date = input("Enter the beginning date (YYYY-MM-DD): ")
+        try:
+            start_date = datetime.strptime(start_date, "%Y-%m-%d")
+            return start_date
+        except ValueError:
+            print("Error: Please enter the date in YYYY-MM-DD format.")
+
+# Get End Date
+def get_end_date(start_date):
+    while True:
+        end_date = input("Enter the end date (YYYY-MM-DD): ")
+        try:
+            end_date = datetime.strptime(end_date, "%Y-%m-%d")
+            if end_date > start_date:
+                return end_date
+            else:
+                print("Error End date must come after the start date.")
+        except ValueError:
+            print("Error: Please enter the date in YYYY-MM-DD format.")
 
 # Function to query Alpha Vantage API
 def query_alpha_vantage(symbol, function, start_date, end_date):
-    api_key = "OUR API KEY"  # Replace with our Alpha Vantage API key
+    api_key = "UT2CFA26ZELQE5H2" 
     base_url = "https://www.alphavantage.co/query"
 
     params = {
@@ -14,14 +86,27 @@ def query_alpha_vantage(symbol, function, start_date, end_date):
         "outputsize": "full",  # Retrieve full data for the range selected
     }
 
-    try:
-        response = requests.get(base_url, params=params)
-        response.raise_for_status()  # Raise an exception for bad response status
-        data = response.json()
-        return data
-    except requests.exceptions.RequestException as e:
-        print("Error querying Alpha Vantage API:", e)
-        return None
+    response = requests.get(base_url, params=params)
+    data = response.json()
+
+    return data
+
+def query_alpha_vantage_intraday(symbol, function, start_date, end_date, interval):
+    api_key = "UT2CFA26ZELQE5H2" 
+    base_url = "https://www.alphavantage.co/query"
+
+    params = {
+        "function": function,
+        "symbol": symbol,
+        "apikey": api_key,
+        "interval": interval,
+        "outputsize": "full",  # Retrieve full data for the range selected
+    }
+
+    response = requests.get(base_url, params=params)
+    data = response.json()
+
+    return data
 
 # Function to plot the graph
 def plot_graph(dates, values, chart_type):
@@ -37,42 +122,29 @@ def plot_graph(dates, values, chart_type):
 
 # Main function (enter inputs)
 def main():
-    symbol = input("Enter the stock symbol: ").upper()
-    function = input("Enter the time series function (e.g., TIME_SERIES_DAILY): ")
-    chart_type = input("Enter the chart type (e.g., line, bar): ").lower()
-    start_date = input("Enter the beginning date (YYYY-MM-DD): ")
-    end_date = input("Enter the end date (YYYY-MM-DD): ")
+    # Inputs
+    symbol = get_symbol()
+    chart_type = get_chart_type()
+    function = get_time_series()
+    start_date = get_start_date()
+    end_date = get_end_date(start_date)
+    interval = "5min"
 
-   
- # Validate dates
-    try:
-        start_date = datetime.strptime(start_date, "%Y-%m-%d")
-        end_date = datetime.strptime(end_date, "%Y-%m-%d")
-        if end_date < start_date:
-            print("Error: End date cannot be before the start date.")
-            return
-    except ValueError:
-        print("Error: Invalid date format.")
-        return
-
-    data = query_alpha_vantage(symbol, function, start_date, end_date)
-
-    if data is None:
-        return  # Exit if there's an error querying the API
+    # Query Alpha Vantage API
+    if choice != "Time Series (5min)":
+        data = query_alpha_vantage(symbol, function, start_date, end_date)
+    else:
+        data = query_alpha_vantage_intraday(symbol,function,start_date,end_date,interval)
 
     # Extract dates and values 
-    try:
-        time_series_data = data["Time Series (Daily)"]
-        dates = []
-        values = []
-        for date, value in time_series_data.items():
-            dates.append(date)
-            values.append(float(value["4. close"]))  # Assuming closing price is needed
+    dates = []
+    values = []
+    for date, value in data[choice].items():
+        dates.append(date)
+        values.append(float(value["4. close"]))  # Assuming closing price is needed
 
-        # Plot the graph
-        plot_graph(dates, values, chart_type)
-    except KeyError:
-        print("Error: Unable to extract data from the response. Check if the symbol and function are correct.")
+    # Plot the graph
+    plot_graph(dates, values, chart_type)
 
 if __name__ == "__main__":
     main()
